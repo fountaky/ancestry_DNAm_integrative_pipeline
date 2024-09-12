@@ -2,7 +2,6 @@
 library(readr)
 library(limma)
 library(dplyr)
-library(stringr)
 library(data.table)
 
 # Load demographics for all TCGA samples
@@ -63,12 +62,12 @@ contMatrix
 
 # Further model fitting steps
 fit2 <- contrasts.fit(fit, contMatrix) # Fit contrasts of interest
-fit2 <- eBayes(fit2) # Bayesrian estimation on original fit
+fit2 <- eBayes(fit2) # Bayesian estimation on original fit
 
 # Get statistics across all probes 
-DMPs_subtype <- topTable(fit2, num=Inf, coef=1,  adjust.method = "BH") # If coef=NULL 38,017 significant probes
+DMPs_subtype <- topTable(fit2, num=Inf, coef=1,  adjust.method = "BH") 
 head(DMPs_subtype)
-sig.probes <- DMPs_subtype[DMPs_subtype$adj.P.Val < 0.05,] # significant pval probes
+sig.probes <- DMPs_subtype[DMPs_subtype$adj.P.Val < 0.05,] # pval filtering
 
 effective <- sig.probes[abs(sig.probes$logFC) >= 0.1,] # effect size filtering
 dim(effective)
