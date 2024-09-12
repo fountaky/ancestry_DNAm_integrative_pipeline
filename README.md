@@ -3,7 +3,7 @@
 ## Introduction
 This repository provides code for integrative analysis of DNA methylation (DNAm), SNP genotyping array, and RNA-seq data to investigate the effects of genetic ancestry on DNAm and its regulatory effects on the transcriptome. Using preprocessed data from the TCGA breast cancer cohort, we present a pipeline for identifying ancestry-specific methylation patterns, mapping methylation quantitative trait loci (meQTLs), and further uncovering expression quantitative trait methylation (eQTMs) associated with these patterns.
 
-The preprint associated with this study can be found [here](https://doi.org/10.1101/2024.08.29.610316)
+The preprint associated with this pipeline can be found [here](https://doi.org/10.1101/2024.08.29.610316)
 
 ## Contents
 
