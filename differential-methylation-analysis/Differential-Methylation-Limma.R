@@ -16,7 +16,7 @@ demographics <- FinalFullTCGAmeta
 
 # Subset demographics dataframe to only BRCA samples
 BRCA_demographics <- demographics[which(demographics$DISEASE == "BRCA"),]
-BRCA_demographics <- na.omit(BRCA_demographics) # 66 samples do not have subtype info
+BRCA_demographics <- na.omit(BRCA_demographics) 
 
 # Preprocess BRCA demographics
 BRCA_demographics <- BRCA_demographics[,-c(1:2)]
