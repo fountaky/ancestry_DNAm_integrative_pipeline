@@ -36,12 +36,12 @@ colnames(methylation)[1] <- "probe"
 patients <- which(colnames(methylation) %in% row.names(BRCA_demographics))
 methylation <- methylation[,c(1 , patients)]
 
-# Use limma to fit the linear regression models
+# Further processing of methylation dataframe
 rownames(methylation) <- as.character(methylation[,1])
 mval <- methylation[,-1]
 mval <- mval[,order(colnames(mval))]
 
-# Make sure there is the same order of samples between demographics and methylation array have
+# Make sure there order of samples is the same between demographics df and methylation array 
 BRCA_demographics <- BRCA_demographics[order(row.names(BRCA_demographics)),]
 all.equal(colnames(mval),row.names(BRCA_demographics))
 
