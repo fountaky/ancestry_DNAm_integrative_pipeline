@@ -15,7 +15,7 @@ import numpy as np
 expr = SP.loadtxt(path_input_expr, delimiter=' ')
 cov = SP.loadtxt(path_iput_cov, delimiter=' ')
 
-# Creat the model
+# Create the model
 model = peer.PEER()
 
 # Set observed data
