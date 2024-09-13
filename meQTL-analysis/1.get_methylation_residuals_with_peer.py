@@ -15,9 +15,10 @@ import numpy as np
 expr = SP.loadtxt(path_input_expr, delimiter=' ')
 cov = SP.loadtxt(path_iput_cov, delimiter=' ')
 
-# Set first verisuib if the model
+# Creat the model
 model = peer.PEER()
 
+# Set observed data
 model.setPhenoMean(expr)
 
 ## Set covariates
