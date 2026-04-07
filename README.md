@@ -5,7 +5,8 @@ This repository provides code for integrative analysis of DNA methylation (DNAm)
 
 The preprint associated with this pipeline can be found [here](https://doi.org/10.1101/2024.08.29.610316). 
 
-![Pipeline Schematic](https://github.com/user-attachments/assets/e757628c-1df9-4f33-a56a-0e3cb53c172e)
+<img width="6000" height="4200" alt="Founta-et-al-Schematic-revision-v2" src="https://github.com/user-attachments/assets/a830f5e7-9b02-46a7-9953-6f85c6757821" />
+
 
 ## Contents
 
