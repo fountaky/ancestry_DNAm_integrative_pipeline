@@ -1,0 +1,111 @@
+---
+title: "Run eQTM analysis for the NCI-Maryland cohort on expression and methylation residuals"
+output: html_document
+date: "2025-01-24"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readr)
+library(stringr)
+```
+
+# Load data
+Probe-gene pairs, along with genomic coordinates
+```{r}
+probe_gene_pairs <- read_csv("AFR-probe-gene-pairs.csv")
+View(probe_gene_pairs)
+```
+Gene expression residuals
+```{r}
+expression <- read_csv("residuals_DESeq2expression_tumors_GeneSymbol.csv")
+head(expression)
+```
+Beta value residuals
+```{r}
+methylation <- read_csv("residuals_methylation_tumors.csv")
+head(methylation)
+```
+Keep same patients between methylation and expression matrix
+```{r}
+colnames(methylation)[1] <- "probe"
+methylation <- methylation[,c("probe",intersect(colnames(methylation), colnames(expression)))]
+```
+
+Create appropriate format for beta matrix
+```{r}
+methylation <- as.data.frame(methylation)
+row.names(methylation) <- methylation[,1]
+methylation <- methylation[,-1]
+```
+Preprocess and format expression data
+```{r}
+expression <- as.data.frame(expression)
+
+row.names(expression) <- expression[,1]
+expression <- expression[,-1]
+```
+
+From file with candidate eQTMs, keep only probe-gene pairs
+```{r}
+pairs <- probe_gene_pairs[,c(6,12)]
+colnames(pairs) <- c("probe", "gene_symbol")
+head(pairs)
+```
+
+Make sure all samples are Female
+```{r}
+meth_metadata <- read_csv("meth_metadata.csv")
+
+sel <- meth_metadata[,c("title","Sex:ch1")]
+
+sel$accession <- str_sub(sel$title,32,36)
+sel$tissue_type <- word(sel$title, -1) 
+
+sel2 <- sel[which(sel$accession %in% colnames(expression) & sel$tissue_type == "tumor"),]
+table(sel2$`Sex:ch1`)
+```
+
+Remove male samples from expression and methylation df
+```{r}
+expression2 <- expression[,-(which(colnames(expression) %in% sel2$accession[which(sel2$`Sex:ch1` == "M")]))]
+```
+Remove male samples from methylation df as well
+```{r}
+methylation2 <- methylation[,colnames(expression2)]
+all.equal(colnames(expression2), colnames(methylation2)) # sanity check for sample order
+```
+
+## Run eQTM analysis
+Create dataframe to store the results
+```{r}
+overall_results <- data.frame(probe = pairs$probe, gene=pairs$gene_symbol)
+```
+
+Write loop
+```{r}
+for (i in 1:dim(pairs)[1]) { 
+  temp_meth <- t(methylation2[pairs$probe[i],])
+  temp_exp <- t(expression2[pairs$gene_symbol[i],])
+  
+  correlation <- cor.test(temp_meth[,1], temp_exp[,1], method = c("spearman"),adjust.method="fdr",exact=FALSE)
+  
+  overall_results$p.val[i] <- correlation$p.value
+  overall_results$rho[i] <- correlation$estimate
+  overall_results$statistic[i] <- correlation$statistic
+  
+}
+```
+
+Keep only significant results (nominal pval < 0.05)
+```{r}
+eqtms <-overall_results[which(overall_results$p.val < 0.05),]
+```
+
+Save significant eQTMs 
+```{r}
+write.csv(eqtms, "maryland_AFR-sig_eQTMs_pval.csv", row.names = F)
+```

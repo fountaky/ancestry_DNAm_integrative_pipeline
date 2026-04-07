@@ -1,0 +1,68 @@
+---
+title: "Expression File vs Meth Probes"
+output: html_document
+date: "2026-03-10"
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Load libraries
+```{r}
+library(readr)
+library(rtracklayer)
+```
+
+Load location info for differentially meth. probes 
+```{r}
+probe_location <- read.csv("AFR_aDMS_locations.csv")
+head(probe_location)
+```
+
+```{r}
+probe_location$CHR_hg38 <- gsub("chr","",probe_location$CHR_hg38)
+```
+
+Load gene position data
+```{r}
+transcript_positions <- read_csv("transcript_positions.csv")
+head(transcript_positions)
+```
+
+
+Add cis window for probes
+```{r}
+probe_location$upstream_window <- probe_location$Start_hg38 -1500000
+probe_location$downstream_window <- probe_location$Start_hg38 + 1500000
+head(probe_location)
+```
+
+Format probe and gene locations as bed files
+```{r}
+probe_location <- na.omit(probe_location)
+
+probes_bed <- GRanges(probe_location$CHR_hg38, IRanges(probe_location$upstream_window, probe_location$downstream_window), probe= probe_location$X)
+
+genes_bed <- GRanges(transcript_positions$chromosome_name,IRanges(transcript_positions$start_position,transcript_positions$end_position),gene=transcript_positions$hgnc_symbol)
+```
+
+Find overlaps between the 2 files (cis-CpG mapping)
+```{r}
+hits <- findOverlaps(genes_bed,probes_bed)
+genes_bed[queryHits(hits)]
+probes_bed[subjectHits(hits)]
+```
+
+```{r}
+genes_hits <- as.data.frame(genes_bed[queryHits(hits)])
+probe_hits <- as.data.frame(probes_bed[subjectHits(hits)])
+
+merged <- cbind(probe_hits,genes_hits)
+```
+
+Save file
+```{r}
+write.csv(merged,"AFR-probe-gene-pairs.csv", row.names = F)
+```
+

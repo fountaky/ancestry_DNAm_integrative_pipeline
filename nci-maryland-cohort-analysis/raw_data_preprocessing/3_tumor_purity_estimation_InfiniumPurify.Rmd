@@ -1,0 +1,87 @@
+---
+title: "Estimate tumor purity using InfiniumPurify"
+author: "Kyriaki Founta"
+date: "2026-02-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+The methylation matrix we processed includes tumor and tumor adjacent normal samples from the same patients, as well as normal breast mastectomy samples from different individuals. For this analysis, we will use the mastectomy methylation samples as a pool of normals, to estimate tumor purity from the tumor methylation samples.  
+
+
+Load libraries
+```{r}
+library(InfiniumPurify)
+library(readr)
+```
+## Tumor Data
+Load tumor betas
+```{r}
+tumor <- read_csv("tumors_enmix_betas.csv")
+head(tumor)
+```
+Process tumor methylation
+```{r}
+colnames(tumor) <- tumor[1,]
+tumor <- tumor[-1,]
+head(tumor)
+```
+```{r}
+tumor <- as.data.frame(tumor)
+
+row.names(tumor) <- tumor[,1]
+tumor <- tumor[,-1]
+
+head(tumor)
+```
+## Mastectomy Data 
+Load mastectomy betas
+```{r}
+normal <- read_csv("mastectomy_enmix_betas.csv")
+head(normal)
+```
+
+Process tumor methylation
+```{r}
+colnames(normal) <- normal[1,]
+normal <- normal[-1,]
+head(normal)
+```
+
+```{r}
+library(dplyr)
+
+normal <- as.data.frame(normal)
+
+row.names(normal) <- normal[,1]
+normal <- normal[,-1]
+
+colnames(normal) <- as.character(colnames(normal))
+
+normal <- normal %>%
+  mutate(across(everything(), as.numeric))
+
+head(normal)
+```
+
+## Purity estimation using pool of normal samples
+Purity for all samples using mastectomy samples
+```{r}
+pur <- getPurity(tumor.data=tumor,normal.data = normal) 
+```
+Look into first few rows
+```{r}
+head(pur)
+```
+Save file
+```{r}
+write.csv(as.data.frame(pur), 
+          "normal-mast_purity_InfPurify.csv",
+          row.names=TRUE)
+```
+
+

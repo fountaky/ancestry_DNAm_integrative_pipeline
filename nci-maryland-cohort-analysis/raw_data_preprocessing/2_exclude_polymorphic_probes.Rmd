@@ -1,0 +1,56 @@
+---
+title: "Identify Potentially Polymorphic SNPs to Exclude Based on McCartney et al. <https://doi.org/10.1016/j.gdata.2016.05.012>"
+author: "Kyriaki Founta"
+date: "2026-02-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load libraries and data
+Libraries
+```{r}
+library(readr)
+library(dplyr)
+```
+McCartney sites
+```{r}
+dat <- read_table("mccartney_snps.txt") # Supplemental table with polumorphic probes from McCartney et al.
+head(dat)
+```
+# Identify sites to filter from beta matrix
+Identify sites with lower or equal to 0.05 AF in AFR or EUR
+```{r}
+ex <- dat 
+ex <- ex[which(ex$AFR_AF >= 0.05 | ex$EUR_AF >= 0.05 | ex$AMR_AF >= 0.05 | ex$SAS_AF >= 0.05 | ex$EAS_AF >= 0.05),]
+```
+
+Load preprcossed beta values
+```{r}
+betas <- read_csv("maryland_enmix_betas_20%_SM.csv")
+head(betas)
+```
+Create appropriate format of the first column
+```{r}
+colnames(betas)[1] <- "IlmnID"
+```
+
+```{r}
+paste0("Before exclusion of polymoprhic CpGs: ", dim(betas)[1]," probes")
+```
+
+Filter out polymorphic snps
+```{r}
+betas2 <- betas[-which(betas$IlmnID %in% ex$IlmnID),]
+dim(betas2)
+```
+
+```{r}
+paste0("After exclusion of polymoprhic CpGs: ", dim(betas2)[1]," probes")
+```
+Save final filtered betas matrix
+```{r}
+write.csv(betas2, "snp-filtered_maryland_enmix_betas_20%_SM.csv", row.names=FALSE)
+```

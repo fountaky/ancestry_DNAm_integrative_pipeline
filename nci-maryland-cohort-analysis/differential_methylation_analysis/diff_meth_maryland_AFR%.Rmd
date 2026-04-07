@@ -1,0 +1,180 @@
+---
+title: "Differential Methylation Analysis in the NCI-Maryland Cohort"
+author: "Kyriaki Founta"
+date: "2026-03-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries and data
+Libraries
+```{r}
+library(readr)
+library(limma)
+library(dplyr)
+library(stringr)
+library(readxl)
+```
+Load methylation metadata downloaded from GEO
+```{r}
+meth_metadata <- read_csv("meth_metadata.csv")
+```
+
+Subset columns of interest and clean-up necessary information
+```{r}
+sel <- meth_metadata[,c("title","geo_accession","race:ch1","molecular subtype:ch1", "age_at_surgery:ch1","Sex:ch1","ndi continuous:ch1")]
+
+sel$accession <- str_sub(sel$title,32,36)
+sel$tissue_type <- word(sel$title, -1) 
+
+colnames(sel)[c(4,5,6,7)] <- c("subtype", "age", "sex", "ndi")
+
+head(sel)
+```
+
+Load genetic ancestry admixture proportions
+```{r}
+ancestry <- read.csv("final_ancestry_maryland.csv")
+```
+Load estimated tumor purity
+```{r}
+purity <- read.csv("normal-mast_purity_InfPurify.csv")
+```
+
+```{r}
+colnames(purity) <- c("accession", "purity")
+```
+
+Combine all data
+```{r}
+merged <- merge(sel[which(sel$tissue_type == "tumor"),c("accession","subtype","age","sex")], ancestry, by ="accession")
+```
+Add purity
+```{r}
+final <- unique(merge(merged, purity, by ="accession"))
+```
+
+Create categorical ancestry anntoation based on 80% admixture threshold
+```{r}
+final <- final %>%  
+  mutate(ancestry = case_when(  
+    AFR > 0.8 ~ "AFR",  
+    EUR > 0.8 ~ "EUR",  
+    AMR > 0.8 ~ "AMR",  
+    EAS > 0.8 ~ "EAS",  
+    SAS > 0.8 ~ "SAS",  
+    TRUE ~ "Admixed"  
+  ))
+
+table(final$ancestry)
+```
+Remove male individuals
+```{r}
+final2 <- final[which(final$sex != "M"),]
+```
+
+```{r}
+row.names(final2) <- final2$accession
+final2 <- final2[,-1]
+```
+
+Remove samples with missing demographic values
+```{r}
+final4 <- na.omit(final2) 
+```
+Load tumor beta values
+```{r}
+betas <- read_csv("tumors_enmix_betas.csv")
+head(betas)
+```
+Process tumor methylation
+```{r}
+colnames(betas) <- betas[1,]
+betas <- betas[-1,]
+```
+
+```{r}
+betas <- as.data.frame(betas)
+
+row.names(betas) <- betas[,1]
+betas <- betas[,-1]
+```
+
+Keep only samples with metadata available
+```{r}
+mat <- as.matrix(betas[,row.names(final4)])
+all.equal(colnames(mat), row.names(final4)) # sanity check for sample order
+```
+
+Trasnform beta values to matrix
+```{r}
+mval <- as.matrix(mat)
+```
+
+Make subtype column compatible with limma syntax
+```{r}
+final4[which(final4$subtype == "HR+"),"subtype"] <- "HRpos"
+final4[which(final4$subtype == "HER+"),"subtype"] <- "HERpos"
+```
+
+## Filter out EPIC-450K non-shared probes
+Load and process EPIC metadata file
+```{r}
+epic <- read_csv("infinium-methylationepic-v-1-0-b5-manifest-file.csv", skip = 7)
+
+epic2 <- as.data.frame(epic)
+
+row.names(epic2) <- epic2[,1]
+epic2 <- epic2[,-c(1:2)]
+
+epic2$Methyl450_Loci[which(is.na(epic2$Methyl450_Loci))] <- "FALSE"
+```
+Subset epic data to 450k array shared probes
+```{r}
+shared <- epic2[which(epic2$Methyl450_Loci == "TRUE"),]
+```
+Keep only EPIC array probes shared with 450K array (to enable comparison with the TCGA BRCA results)
+```{r}
+mval2 <- mval[which(row.names(mval) %in% row.names(shared)),]
+```
+
+## Run differential methylation analysis
+First, design the model
+```{r}
+design_full <- model.matrix(~0 + AFR + purity + age + subtype, data=final4) 
+head(design_full)
+```
+Fit the model
+```{r}
+fit <- lmFit(mval2, design_full)
+```
+
+Fit contrasts and recalibrate model
+```{r}
+fit2 <- eBayes(fit)
+```
+
+Final run the differential methylation function
+```{r}
+DMPs_subtype <- topTable(fit2, num=Inf, coef="AFR",  adjust.method = "BH") 
+head(DMPs_subtype)
+```
+Get significant results based on q-value
+```{r}
+sig.probes <- DMPs_subtype[DMPs_subtype$adj.P.Val < 0.05,]
+dim(sig.probes)
+```
+
+Further filter out results with low effect sizes
+```{r}
+effective <- sig.probes[abs(sig.probes$logFC) >= 0.1,]
+dim(effective)
+```
+Save results
+```{r}
+write.csv(effective,"AFR-significant_probes_revised-meta_450k-only.csv", row.names = T)
+```
+
