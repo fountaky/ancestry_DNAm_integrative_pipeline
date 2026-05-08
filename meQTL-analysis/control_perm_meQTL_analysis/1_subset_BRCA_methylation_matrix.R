@@ -29,7 +29,7 @@ sex_chrom <- locations[which(locations$CHR %in% unique(locations$CHR)[c(1:2)]),]
 control <- control[-which(row.names(control) %in% row.names(sex_chrom)),] # remove sex chromosome probes
 control <- control[-which(grepl("rs",row.names(control))),] # remove all "rs" probes
 
-# Load probes with ancestry associated pvalue > 0.5 
+# Load probes with ancestry associated pvalue < 0.5 
 ancestry <- read.csv("Ancestry_Effect_Probes.csv")
 
 # Remove ancestry associated probes (pvalue < 0.5) from control probe pool 
