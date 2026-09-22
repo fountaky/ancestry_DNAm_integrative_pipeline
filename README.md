@@ -3,7 +3,7 @@
 ## Introduction
 This repository provides code for integrative analysis of DNA methylation (DNAm), SNP genotyping array, and RNA-seq data to investigate the effects of population-related genetic variation on DNAm and its downstream effects on the transcriptome. Using preprocessed data from the TCGA breast cancer cohort, we present a pipeline for identifying ancestry-related methylation patterns, mapping methylation quantitative trait loci (meQTLs), and further uncovering expression quantitative trait methylation (eQTMs) associated with these patterns. We also provide code for the identification of genetic ancestry effects on DNAm in the NCI-Maryland Breast Cancer cohort, using raw whole exome sequencing, DNAm and RNAseq data.
 
-The preprint associated with this pipeline can be found [here](https://doi.org/10.1101/2024.08.29.610316). 
+The manuscript associated with this pipeline can be found [here](https://doi.org/10.1038/s42003-026-10784-x). 
 
 <img width="6000" height="4200" alt="Founta-et-al-Schematic-revision-v2" src="https://github.com/user-attachments/assets/a830f5e7-9b02-46a7-9953-6f85c6757821" />
 
@@ -38,5 +38,5 @@ Includes code to generate main paper figures.
 ## Citation  
 If you use this code, please cite:
 
-Founta & Chambwe (2024). Genetic ancestry-specific meQTLs control immune function regulation in a breast cancer cohort of African and European patients. *bioRxiv*.    
-https://doi.org/10.1101/2024.08.29.610316  
+Founta, K., Chambwe, N. Genetic variation underlies ancestry-associated DNA methylation differences with immune regulatory potential in breast tumors. *Commun Biol* (2026). 
+https://doi.org/10.1038/s42003-026-10784-x  
